@@ -95,6 +95,19 @@
                     <button class="filter-btn" data-priority="alta">Alta</button>
                 </div>
             </div>
+            <div class="filter-group">
+                <label class="filter-label" for="sortSelect">Ordenar por:</label>
+                <select id="sortSelect" class="sort-select">
+                    <option value="date-desc">Data (mais recente)</option>
+                    <option value="date-asc">Data (mais antiga)</option>
+                    <option value="priority-desc">Prioridade (alta → baixa)</option>
+                    <option value="priority-asc">Prioridade (baixa → alta)</option>
+                    <option value="status-pending">Status (pendentes primeiro)</option>
+                    <option value="status-completed">Status (concluídas primeiro)</option>
+                    <option value="alpha-asc">Alfabética (A → Z)</option>
+                    <option value="alpha-desc">Alfabética (Z → A)</option>
+                </select>
+            </div>
         </div>
 
         <!-- actions (exportar) -->

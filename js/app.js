@@ -14,6 +14,7 @@ const AppState = {
         status: 'todas', // todas, pendentes, concluidas
         priority: 'todas' // todas, baixa, media, alta
     },
+    sortBy: 'date-desc', // ordenação padrão: mais recente primeiro
     theme: 'light', // light, dark
     taskToDelete: null
 };
@@ -56,6 +57,7 @@ const DOM = {
     // filtros
     filterBtns: document.querySelectorAll('.filter-btn[data-filter]'),
     priorityBtns: document.querySelectorAll('.filter-btn[data-priority]'),
+    sortSelect: document.getElementById('sortSelect'),
 
     // tema
     themeToggle: document.getElementById('themeToggle'),
@@ -117,6 +119,62 @@ const filterTasks = (tasks, filters) => {
 
         return statusMatch && priorityMatch;
     });
+};
+
+// ordenar tarefas baseado no critério selecionado
+const sortTasks = (tasks, sortBy) => {
+    // criar cópia para não mutar o array original
+    const sorted = [...tasks];
+
+    // mapa de prioridades para ordenação numérica
+    const priorityWeight = {
+        alta: 3,
+        media: 2,
+        baixa: 1
+    };
+
+    switch (sortBy) {
+        case 'date-desc':
+            // mais recente primeiro
+            return sorted.sort((a, b) => b.createdAt - a.createdAt);
+
+        case 'date-asc':
+            // mais antiga primeiro
+            return sorted.sort((a, b) => a.createdAt - b.createdAt);
+
+        case 'priority-desc':
+            // alta → média → baixa
+            return sorted.sort((a, b) => priorityWeight[b.priority] - priorityWeight[a.priority]);
+
+        case 'priority-asc':
+            // baixa → média → alta
+            return sorted.sort((a, b) => priorityWeight[a.priority] - priorityWeight[b.priority]);
+
+        case 'status-pending':
+            // pendentes primeiro, depois concluídas
+            return sorted.sort((a, b) => {
+                if (a.completed === b.completed) return 0;
+                return a.completed ? 1 : -1;
+            });
+
+        case 'status-completed':
+            // concluídas primeiro, depois pendentes
+            return sorted.sort((a, b) => {
+                if (a.completed === b.completed) return 0;
+                return a.completed ? -1 : 1;
+            });
+
+        case 'alpha-asc':
+            // a → z
+            return sorted.sort((a, b) => a.title.localeCompare(b.title, 'pt'));
+
+        case 'alpha-desc':
+            // z → a
+            return sorted.sort((a, b) => b.title.localeCompare(a.title, 'pt'));
+
+        default:
+            return sorted;
+    }
 };
 
 // calcular estatísticas
@@ -220,20 +278,24 @@ const getPriorityIcon = (priority) => {
 
 // renderizar lista de tarefas
 const renderTasksList = () => {
+    // 1. filtrar tarefas
     const filteredTasks = filterTasks(AppState.tasks, AppState.filters);
+
+    // 2. ordenar tarefas filtradas
+    const sortedTasks = sortTasks(filteredTasks, AppState.sortBy);
 
     // limpar lista
     DOM.tasksList.innerHTML = '';
 
     // mostrar/ocultar estado vazio
-    if (filteredTasks.length === 0) {
+    if (sortedTasks.length === 0) {
         DOM.emptyState.classList.add('show');
     } else {
         DOM.emptyState.classList.remove('show');
     }
 
     // renderizar cada tarefa
-    filteredTasks.forEach(task => {
+    sortedTasks.forEach(task => {
         const taskElement = renderTask(task);
         DOM.tasksList.appendChild(taskElement);
     });
@@ -432,6 +494,12 @@ const initEventListeners = () => {
             const priority = btn.dataset.priority;
             applyPriorityFilter(priority);
         });
+    });
+
+    // ordenação
+    DOM.sortSelect.addEventListener('change', (e) => {
+        AppState.sortBy = e.target.value;
+        renderTasksList();
     });
 
     // toggle de tema
