@@ -1,5 +1,5 @@
 // ========================================
-// TASKFLOW - GERENCIADOR DE TAREFAS
+// TASKFLOW - GESTOR DE TAREFAS
 // ========================================
 
 'use strict';
@@ -14,6 +14,7 @@ const AppState = {
         status: 'todas', // todas, pendentes, concluidas
         priority: 'todas' // todas, baixa, media, alta
     },
+    searchQuery: '', // termo de pesquisa
     sortBy: 'date-desc', // ordenação padrão: mais recente primeiro
     theme: 'light', // light, dark
     taskToDelete: null
@@ -35,21 +36,27 @@ const PRIORITY_COLORS = {
 };
 
 // ========================================
-// SELETORES DO DOM
+// SELECTORES DO DOM
 // ========================================
 
 const DOM = {
-    // form
+    // formulário
     taskForm: document.getElementById('taskForm'),
     taskTitle: document.getElementById('taskTitle'),
     taskDescription: document.getElementById('taskDescription'),
     taskPriority: document.getElementById('taskPriority'),
 
+    // pesquisa
+    searchInput: document.getElementById('searchInput'),
+    searchClear: document.getElementById('searchClear'),
+    searchResults: document.getElementById('searchResults'),
+    searchResultsCount: document.getElementById('searchResultsCount'),
+
     // lista de tarefas
     tasksList: document.getElementById('tasksList'),
     emptyState: document.getElementById('emptyState'),
 
-    // stats
+    // estatísticas
     totalTasks: document.getElementById('totalTasks'),
     pendingTasks: document.getElementById('pendingTasks'),
     completedTasks: document.getElementById('completedTasks'),
@@ -62,7 +69,7 @@ const DOM = {
     // tema
     themeToggle: document.getElementById('themeToggle'),
 
-    // export
+    // exportar
     exportBtn: document.getElementById('exportBtn'),
 
     // modal
@@ -72,7 +79,7 @@ const DOM = {
 };
 
 // ========================================
-// FUNÇÕES AUXILIARES (PURE FUNCTIONS)
+// FUNÇÕES AUXILIARES (FUNÇÕES PURAS)
 // ========================================
 
 // gerar id único
@@ -103,10 +110,30 @@ const createTask = (title, description, priority) => {
     };
 };
 
+// escapar caracteres especiais de regex
+const escapeRegex = (string) => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
+// pesquisar tarefas por termo
+const searchTasks = (tasks, query) => {
+    if (!query.trim()) {
+        return tasks;
+    }
+
+    const searchTerm = query.toLowerCase().trim();
+
+    return tasks.filter(task => {
+        const titleMatch = task.title.toLowerCase().includes(searchTerm);
+        const descriptionMatch = task.description.toLowerCase().includes(searchTerm);
+        return titleMatch || descriptionMatch;
+    });
+};
+
 // filtrar tarefas baseado no estado atual
 const filterTasks = (tasks, filters) => {
     return tasks.filter(task => {
-        // filtro de status
+        // filtro de estado
         const statusMatch =
             filters.status === 'todas' ||
             (filters.status === 'pendentes' && !task.completed) ||
@@ -197,17 +224,17 @@ const Storage = {
             const data = localStorage.getItem(STORAGE_KEYS.TASKS);
             return data ? JSON.parse(data) : [];
         } catch (error) {
-            console.error('erro ao carregar tarefas:', error);
+            console.error('Erro ao carregar tarefas:', error);
             return [];
         }
     },
 
-    // salvar tarefas no localStorage
+    // guardar tarefas no localStorage
     saveTasks: (tasks) => {
         try {
             localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
         } catch (error) {
-            console.error('erro ao salvar tarefas:', error);
+            console.error('Erro ao guardar tarefas:', error);
         }
     },
 
@@ -216,7 +243,7 @@ const Storage = {
         return localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
     },
 
-    // salvar tema
+    // guardar tema
     saveTheme: (theme) => {
         localStorage.setItem(STORAGE_KEYS.THEME, theme);
     }
@@ -226,6 +253,19 @@ const Storage = {
 // RENDERIZAÇÃO DO DOM
 // ========================================
 
+// aplicar highlight aos termos encontrados
+const highlightText = (text, query) => {
+    if (!query.trim()) {
+        return escapeHtml(text);
+    }
+
+    const escapedQuery = escapeRegex(query.trim());
+    const regex = new RegExp(`(${escapedQuery})`, 'gi');
+    const escapedText = escapeHtml(text);
+    
+    return escapedText.replace(regex, '<mark class="search-highlight">$1</mark>');
+};
+
 // renderizar uma tarefa individual
 const renderTask = (task) => {
     const taskCard = document.createElement('div');
@@ -233,11 +273,15 @@ const renderTask = (task) => {
     taskCard.style.setProperty('--task-priority-color', PRIORITY_COLORS[task.priority]);
     taskCard.dataset.taskId = task.id;
 
+    // aplicar highlight se houver termo de pesquisa
+    const titleHtml = highlightText(task.title, AppState.searchQuery);
+    const descriptionHtml = task.description ? highlightText(task.description, AppState.searchQuery) : '';
+
     taskCard.innerHTML = `
         <div class="task-header">
             <div class="task-info">
-                <h3 class="task-title">${escapeHtml(task.title)}</h3>
-                ${task.description ? `<p class="task-description">${escapeHtml(task.description)}</p>` : ''}
+                <h3 class="task-title">${titleHtml}</h3>
+                ${task.description ? `<p class="task-description">${descriptionHtml}</p>` : ''}
                 <div class="task-meta">
                     <span class="task-priority ${task.priority}">
                         ${getPriorityIcon(task.priority)} ${task.priority}
@@ -278,18 +322,39 @@ const getPriorityIcon = (priority) => {
 
 // renderizar lista de tarefas
 const renderTasksList = () => {
-    // 1. filtrar tarefas
-    const filteredTasks = filterTasks(AppState.tasks, AppState.filters);
+    // 1. pesquisar tarefas
+    const searchedTasks = searchTasks(AppState.tasks, AppState.searchQuery);
 
-    // 2. ordenar tarefas filtradas
+    // 2. filtrar tarefas
+    const filteredTasks = filterTasks(searchedTasks, AppState.filters);
+
+    // 3. ordenar tarefas filtradas
     const sortedTasks = sortTasks(filteredTasks, AppState.sortBy);
 
     // limpar lista
     DOM.tasksList.innerHTML = '';
 
+    // atualizar contador de resultados de pesquisa
+    updateSearchResults(sortedTasks.length);
+
     // mostrar/ocultar estado vazio
     if (sortedTasks.length === 0) {
         DOM.emptyState.classList.add('show');
+        
+        // personalizar mensagem do estado vazio
+        const emptyText = DOM.emptyState.querySelector('.empty-text');
+        const emptySubtext = DOM.emptyState.querySelector('.empty-subtext');
+        
+        if (AppState.searchQuery.trim()) {
+            emptyText.textContent = 'Nenhum resultado encontrado';
+            emptySubtext.textContent = `Não foram encontradas tarefas para "${AppState.searchQuery}"`;
+        } else if (AppState.tasks.length === 0) {
+            emptyText.textContent = 'Nenhuma tarefa encontrada';
+            emptySubtext.textContent = 'Adiciona a tua primeira tarefa acima';
+        } else {
+            emptyText.textContent = 'Nenhuma tarefa corresponde aos filtros';
+            emptySubtext.textContent = 'Experimenta ajustar os filtros';
+        }
     } else {
         DOM.emptyState.classList.remove('show');
     }
@@ -305,6 +370,20 @@ const renderTasksList = () => {
     updatePageTitle();
 };
 
+// atualizar contador de resultados de pesquisa
+const updateSearchResults = (count) => {
+    if (AppState.searchQuery.trim()) {
+        DOM.searchResults.style.display = 'block';
+        DOM.searchResultsCount.textContent = count;
+        
+        // actualizar texto do contador (singular/plural)
+        const resultText = count === 1 ? 'resultado encontrado' : 'resultados encontrados';
+        DOM.searchResults.innerHTML = `<span id="searchResultsCount">${count}</span> ${resultText}`;
+    } else {
+        DOM.searchResults.style.display = 'none';
+    }
+};
+
 // atualizar estatísticas
 const updateStats = () => {
     const stats = calculateStats(AppState.tasks);
@@ -317,9 +396,9 @@ const updateStats = () => {
 const updatePageTitle = () => {
     const pendingCount = AppState.tasks.filter(t => !t.completed).length;
     if (pendingCount > 0) {
-        document.title = `(${pendingCount}) TaskFlow - Gerenciador de Tarefas`;
+        document.title = `(${pendingCount}) TaskFlow - Gestor de Tarefas`;
     } else {
-        document.title = 'TaskFlow - Gerenciador de Tarefas';
+        document.title = 'TaskFlow - Gestor de Tarefas';
     }
 };
 
@@ -375,14 +454,42 @@ const confirmTaskDeletion = (taskId) => {
 };
 
 // ========================================
+// PESQUISA
+// ========================================
+
+// aplicar pesquisa
+const applySearch = (query) => {
+    AppState.searchQuery = query;
+    
+    // mostrar/ocultar botão de limpar
+    if (query.trim()) {
+        DOM.searchClear.style.display = 'flex';
+    } else {
+        DOM.searchClear.style.display = 'none';
+    }
+    
+    renderTasksList();
+};
+
+// limpar pesquisa
+const clearSearch = () => {
+    DOM.searchInput.value = '';
+    AppState.searchQuery = '';
+    DOM.searchClear.style.display = 'none';
+    DOM.searchResults.style.display = 'none';
+    renderTasksList();
+    DOM.searchInput.focus();
+};
+
+// ========================================
 // FILTROS
 // ========================================
 
-// aplicar filtro de status
+// aplicar filtro de estado
 const applyStatusFilter = (status) => {
     AppState.filters.status = status;
 
-    // atualizar botões ativos
+    // atualizar botões activos
     DOM.filterBtns.forEach(btn => {
         if (btn.dataset.filter === status) {
             btn.classList.add('active');
@@ -398,7 +505,7 @@ const applyStatusFilter = (status) => {
 const applyPriorityFilter = (priority) => {
     AppState.filters.priority = priority;
 
-    // atualizar botões ativos
+    // atualizar botões activos
     DOM.priorityBtns.forEach(btn => {
         if (btn.dataset.priority === priority) {
             btn.classList.add('active');
@@ -463,6 +570,14 @@ const initEventListeners = () => {
         addTask(title, description, priority);
     });
 
+    // pesquisa em tempo real
+    DOM.searchInput.addEventListener('input', (e) => {
+        applySearch(e.target.value);
+    });
+
+    // limpar pesquisa
+    DOM.searchClear.addEventListener('click', clearSearch);
+
     // ações nas tarefas (delegação de eventos)
     DOM.tasksList.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-action]');
@@ -480,7 +595,7 @@ const initEventListeners = () => {
         }
     });
 
-    // filtros de status
+    // filtros de estado
     DOM.filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const filter = btn.dataset.filter;
@@ -536,6 +651,18 @@ const initEventListeners = () => {
         if (e.key === 'Escape' && DOM.confirmModal.classList.contains('show')) {
             AppState.taskToDelete = null;
             DOM.confirmModal.classList.remove('show');
+        }
+        
+        // esc para limpar pesquisa
+        if (e.key === 'Escape' && AppState.searchQuery.trim() && document.activeElement === DOM.searchInput) {
+            clearSearch();
+        }
+        
+        // ctrl+k ou cmd+k para focar na pesquisa
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            DOM.searchInput.focus();
+            DOM.searchInput.select();
         }
     });
 };
