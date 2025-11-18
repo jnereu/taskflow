@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Gerenciador de Tarefas</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- container principal -->
+    <div class="container">
+        <!-- header com título e toggle de tema -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="logo">
+                    <span class="logo-icon">✓</span>
+                    TaskFlow
+                </h1>
+                <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
+                    <span class="theme-icon">🌙</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- estatísticas das tarefas -->
+        <div class="stats">
+            <div class="stat-card">
+                <span class="stat-number" id="totalTasks">0</span>
+                <span class="stat-label">Total</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="pendingTasks">0</span>
+                <span class="stat-label">Pendentes</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="completedTasks">0</span>
+                <span class="stat-label">Concluídas</span>
+            </div>
+        </div>
+
+        <!-- formulário para adicionar tarefas -->
+        <div class="task-form-container">
+            <form class="task-form" id="taskForm">
+                <div class="form-group">
+                    <input
+                        type="text"
+                        id="taskTitle"
+                        class="form-input"
+                        placeholder="Título da tarefa..."
+                        required
+                        maxlength="100"
+                    >
+                </div>
+                <div class="form-group">
+                    <textarea
+                        id="taskDescription"
+                        class="form-textarea"
+                        placeholder="Descrição (opcional)..."
+                        rows="3"
+                        maxlength="500"
+                    ></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <select id="taskPriority" class="form-select">
+                            <option value="baixa">Prioridade Baixa</option>
+                            <option value="media" selected>Prioridade Média</option>
+                            <option value="alta">Prioridade Alta</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-icon">+</span>
+                        Adicionar Tarefa
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- filtros -->
+        <div class="filters">
+            <div class="filter-group">
+                <label class="filter-label">Filtrar por:</label>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="todas">Todas</button>
+                    <button class="filter-btn" data-filter="pendentes">Pendentes</button>
+                    <button class="filter-btn" data-filter="concluidas">Concluídas</button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Prioridade:</label>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-priority="todas">Todas</button>
+                    <button class="filter-btn" data-priority="baixa">Baixa</button>
+                    <button class="filter-btn" data-priority="media">Média</button>
+                    <button class="filter-btn" data-priority="alta">Alta</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- actions (exportar) -->
+        <div class="actions">
+            <button class="btn btn-secondary" id="exportBtn">
+                <span class="btn-icon">⬇</span>
+                Exportar JSON
+            </button>
+        </div>
+
+        <!-- lista de tarefas -->
+        <div class="tasks-container">
+            <div id="tasksList" class="tasks-list">
+                <!-- tarefas serão inseridas aqui via js -->
+            </div>
+            <div id="emptyState" class="empty-state">
+                <div class="empty-icon">📝</div>
+                <p class="empty-text">Nenhuma tarefa encontrada</p>
+                <p class="empty-subtext">Adiciona a tua primeira tarefa acima</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- modal de confirmação (opcional) -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <h3 class="modal-title">Confirmar exclusão</h3>
+            <p class="modal-text">Tens a certeza que desejas eliminar esta tarefa?</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancelDelete">Cancelar</button>
+                <button class="btn btn-danger" id="confirmDelete">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
