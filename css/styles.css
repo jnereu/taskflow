@@ -25,6 +25,10 @@
     --color-primary: #4299e1;
     --color-primary-dark: #3182ce;
 
+    /* cor de highlight de pesquisa */
+    --highlight-bg: #fef08a;
+    --highlight-text: #854d0e;
+
     /* spacing */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
@@ -54,6 +58,10 @@
     --border-color: #4a5568;
     --shadow: rgba(0, 0, 0, 0.3);
     --shadow-hover: rgba(0, 0, 0, 0.5);
+
+    /* highlight de pesquisa para tema escuro */
+    --highlight-bg: #854d0e;
+    --highlight-text: #fef08a;
 }
 
 /* ========================================
@@ -237,6 +245,97 @@ body {
 .form-textarea {
     resize: vertical;
     min-height: 80px;
+}
+
+/* ========================================
+   CAMPO DE PESQUISA
+   ======================================== */
+
+.search-container {
+    margin-bottom: var(--spacing-lg);
+}
+
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: var(--spacing-md);
+    font-size: 1.125rem;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.search-input {
+    width: 100%;
+    padding: var(--spacing-md);
+    padding-left: 3rem;
+    padding-right: 3rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: all var(--transition-fast);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.search-input::placeholder {
+    color: var(--text-muted);
+}
+
+.search-clear {
+    position: absolute;
+    right: var(--spacing-sm);
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.search-clear:hover {
+    background: var(--color-danger);
+    color: white;
+}
+
+.search-results {
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+}
+
+.search-results span {
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+/* highlight dos termos de pesquisa */
+.search-highlight {
+    background-color: var(--highlight-bg);
+    color: var(--highlight-text);
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
 }
 
 /* ========================================
