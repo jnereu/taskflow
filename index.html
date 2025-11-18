@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow - Gerenciador de Tarefas</title>
+    <title>TaskFlow - Gestor de Tarefas</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -76,6 +76,26 @@
             </form>
         </div>
 
+        <!-- campo de pesquisa -->
+        <div class="search-container">
+            <div class="search-input-wrapper">
+                <span class="search-icon">🔍</span>
+                <input
+                    type="text"
+                    id="searchInput"
+                    class="search-input"
+                    placeholder="Pesquisar por título ou descrição..."
+                    maxlength="100"
+                >
+                <button class="search-clear" id="searchClear" aria-label="Limpar pesquisa" style="display: none;">
+                    ✕
+                </button>
+            </div>
+            <div class="search-results" id="searchResults" style="display: none;">
+                <span id="searchResultsCount">0</span> resultado(s) encontrado(s)
+            </div>
+        </div>
+
         <!-- filtros -->
         <div class="filters">
             <div class="filter-group">
@@ -102,8 +122,8 @@
                     <option value="date-asc">Data (mais antiga)</option>
                     <option value="priority-desc">Prioridade (alta → baixa)</option>
                     <option value="priority-asc">Prioridade (baixa → alta)</option>
-                    <option value="status-pending">Status (pendentes primeiro)</option>
-                    <option value="status-completed">Status (concluídas primeiro)</option>
+                    <option value="status-pending">Estado (pendentes primeiro)</option>
+                    <option value="status-completed">Estado (concluídas primeiro)</option>
                     <option value="alpha-asc">Alfabética (A → Z)</option>
                     <option value="alpha-desc">Alfabética (Z → A)</option>
                 </select>
@@ -134,7 +154,7 @@
     <!-- modal de confirmação (opcional) -->
     <div class="modal" id="confirmModal">
         <div class="modal-content">
-            <h3 class="modal-title">Confirmar exclusão</h3>
+            <h3 class="modal-title">Confirmar eliminação</h3>
             <p class="modal-text">Tens a certeza que desejas eliminar esta tarefa?</p>
             <div class="modal-actions">
                 <button class="btn btn-secondary" id="cancelDelete">Cancelar</button>
