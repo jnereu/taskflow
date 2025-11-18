@@ -7,6 +7,10 @@
 ![CSS3](https://img.shields.io/badge/CSS3-Modern-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+Screenshot:
+
+![Taskflow App](https://raw.githubusercontent.com/jnereu/taskflow/refs/heads/claude/taskflow-app-01Xmapat4hUdLSfpn154yvZd/taskflow.png)
+
 ## ✨ Funcionalidades
 
 ### Core Features
